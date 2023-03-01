@@ -47,12 +47,14 @@
 
 %endif
   rfnoc_block_${block.module_name} #(
+  %if not hasattr(block, "simulink") or block.simulink == 0:
     .THIS_PORTID         (${block_id}),
     .CHDR_W              (CHDR_W),
 %for name, value in block_params.items():
     .${"%-20s" % name}(${value}),
 %endfor
     .MTU                 (MTU)
+  %endif
   ) b_${block_name}_${block_number} (
     .rfnoc_chdr_clk      (rfnoc_chdr_clk),
     .rfnoc_ctrl_clk      (rfnoc_ctrl_clk),
@@ -61,8 +63,25 @@
     .${"%-20s" % (clock["name"] + "_clk")}(${block_name}_${clock["name"]}_clk),
   %endif
 %endfor
+  %if not hasattr(block, "simulink") or block.simulink == 0:
     .rfnoc_core_config   (rfnoc_core_config[512*${block_number + 1}-1:512*${block_number}]),
     .rfnoc_core_status   (rfnoc_core_status[512*${block_number + 1}-1:512*${block_number}]),
+  %endif
+  %if hasattr(block, "simulink") and block.simulink == 1:
+    // generating clocks and resets for a simulink rfnoc block
+    .clk(${block_name}_${clock["name"]}_clk),
+    .reset(~core_arst),
+    .clk_enable(1'b1),
+    // generating buses for a simulink rfnoc block
+    .rfnoc_core_config_0(rfnoc_core_config[512*${block_number + 1}-0*128-1:512*${block_number + 1}-1*128]),
+    .rfnoc_core_config_1(rfnoc_core_config[512*${block_number + 1}-1*128-1:512*${block_number + 1}-2*128]),
+    .rfnoc_core_config_2(rfnoc_core_config[512*${block_number + 1}-2*128-1:512*${block_number + 1}-3*128]),
+    .rfnoc_core_config_3(rfnoc_core_config[512*${block_number + 1}-3*128-1:512*${block_number + 1}-4*128]),
+    .rfnoc_core_status_0(rfnoc_core_status[512*${block_number + 1}-0*128-1:512*${block_number + 1}-1*128]),
+    .rfnoc_core_status_1(rfnoc_core_status[512*${block_number + 1}-1*128-1:512*${block_number + 1}-2*128]),
+    .rfnoc_core_status_2(rfnoc_core_status[512*${block_number + 1}-2*128-1:512*${block_number + 1}-3*128]),
+    .rfnoc_core_status_3(rfnoc_core_status[512*${block_number + 1}-3*128-1:512*${block_number + 1}-4*128]),
+  %endif
 %if hasattr(block, "io_ports"):
   %for name, io_port in block.io_ports.items():
     %for wire in io_port["wires"]:
