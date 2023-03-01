@@ -649,6 +649,7 @@ package PkgChdrBfm;
 
     rx_state = ST_HEADER;
 
+// $display("RX PACKET: data.size()=%0d", axis_packet.data.size());
     for(int i = 0; i < axis_packet.data.size(); i++) begin
       word = axis_packet.data[i];
 
@@ -656,6 +657,7 @@ package PkgChdrBfm;
         ST_HEADER : begin
           num_rx_bytes += BYTES_PER_CHDR_W;
           header = word[63:0];
+//          $display("GOT HEADER: %0h", header);
 
           // Depending on the size of the word, we could have just the header
           // or both the header and the timestamp in this word.
@@ -700,6 +702,7 @@ package PkgChdrBfm;
     // Check length field, noting that the last word may be partially filled
     assert (header.length >= num_rx_bytes-(BYTES_PER_CHDR_W-1) &&
             header.length <= num_rx_bytes) else begin
+      $display("HEADER.LENGTH: %0d num_rx_bytes: %0d", header.length, num_rx_bytes);
       $error("ChdrPacket::axis_to_chdr: Incorrect CHDR length");
     end
   endfunction : axis_to_chdr
